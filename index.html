@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jam Kosong Guru</title>
+<style>
+  :root{--bg:#f4f7f8;--card:#fff;--fg:#14262b;--mut:#566a70;--bd:#cfd9dc;--acc:#0e6b73;
+        --ok:#c6ecd1;--okt:#0b5224;--no:#f6cfcf;--not:#8a1c1c;--bl:#e1e5e6;--blt:#667479}
+  @media(prefers-color-scheme:dark){:root{--bg:#10191c;--card:#18262a;--fg:#e8f0f2;--mut:#a0b3b9;--bd:#2d4146;
+        --acc:#5cc2cb;--ok:#1d4d2c;--okt:#b2ecc4;--no:#5a2428;--not:#f6baba;--bl:#2a3a3e;--blt:#93a6ac}}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:17px/1.5 "Segoe UI",Arial,sans-serif}
+  main{max-width:960px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:0 0 8px}
+  .sub{margin:0 0 16px;color:var(--mut);font-size:15px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs button{flex:1;padding:12px;font:inherit;border:1px solid var(--bd);border-radius:10px;
+               background:var(--card);color:var(--fg);cursor:pointer}
+  .tabs button[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+  .tabs.kecil button{padding:8px;font-size:15px}
+  .panel{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px}
+  .row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  label{flex:1;min-width:140px;display:flex;flex-direction:column;gap:4px;font-size:15px;color:var(--mut)}
+  label.cek{flex-direction:row;align-items:center;gap:8px;color:var(--fg)}
+  select,input{padding:10px;font:inherit;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--fg)}
+  input[type=checkbox]{width:20px;height:20px}
+  select:focus,input:focus,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+  .guru{padding:10px 0;border-top:1px solid var(--bd)}
+  .guru b{display:block;margin-bottom:4px}
+  .chip{display:inline-block;margin:3px 6px 3px 0;padding:4px 12px;border-radius:99px;background:var(--ok);color:var(--okt);font-size:16px}
+  .chip.long{font-weight:700}
+  .none{color:var(--mut)}
+  .scroll{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border:1px solid var(--bd);padding:6px 8px;text-align:center;white-space:nowrap}
+  td.Kosong{background:var(--ok);color:var(--okt)}
+  td.Terisi{background:var(--no);color:var(--not)}
+  td.Blokir{background:var(--bl);color:var(--blt)}
+  .hasil{margin:8px 0;padding:12px 14px;border-radius:10px;background:var(--ok);color:var(--okt);font-weight:600}
+  .gagal{padding:12px 14px;border-radius:10px;background:var(--no);color:var(--not);margin:8px 0}
+  .sukses{padding:12px 14px;border-radius:10px;background:var(--ok);color:var(--okt);margin:8px 0}
+  .hint{margin:12px 0 0;font-size:14px;color:var(--mut)}
+  button.btn{padding:10px 16px;font:inherit;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--fg);cursor:pointer}
+  button.utama{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+  button.kecil{padding:4px 10px;font-size:14px}
+  button:disabled{opacity:.6;cursor:default}
+  #muat{margin-top:14px;font-size:15px}
+  #info{margin-top:10px;font-size:14px;color:var(--mut)}
+  table.adm td{text-align:left}
+  table.adm td.aksi{text-align:right}
+  .form{border:1px solid var(--bd);border-radius:10px;padding:14px;margin:14px 0;background:var(--bg)}
+  .form label{background:none}
+  .grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+  .grid button{padding:8px 10px;font:inherit;font-size:15px;border:1px solid var(--bd);border-radius:8px;cursor:pointer;
+               background:var(--ok);color:var(--okt)}
+  .grid button.blokir{background:var(--bl);color:var(--blt);font-weight:700;text-decoration:line-through}
+  .grid button.terisi{background:var(--no);color:var(--not);cursor:default}
+  .badge{font-size:13px;padding:1px 8px;border-radius:99px;background:var(--bl);color:var(--blt);margin-left:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Jam kosong guru</h1>
+  <p class="sub">Cari jam kosong untuk murid baru atau guru pengganti, dan atur jadwal guru.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab1" aria-selected="true">Jam kosong</button>
+    <button role="tab" id="tab2" aria-selected="false">Cari pengganti</button>
+    <button role="tab" id="tab3" aria-selected="false">Atur jadwal</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <section class="panel" id="panel1">
+    <div class="row">
+      <label>Alat musik <select id="alat1"></select></label>
+      <label>Tanggal (boleh dikosongkan) <input type="date" id="tgl1"></label>
+      <label>Hari <select id="hari1"></select></label>
+    </div>
+    <div id="hasil1"></div>
+    <div class="scroll" id="tabel1"></div>
+    <p class="hint">Hijau = kosong, merah = terisi murid, abu-abu = diblokir. Tulisan tebal = kosong 60 menit atau lebih. Bila tanggal diisi, izin dan ganti jadwal pada tanggal itu ikut dihitung.</p>
+  </section>
+
+  <!-- TAB 2 -->
+  <section class="panel" id="panel2" hidden>
+    <div class="row">
+      <label>Alat musik <select id="alat2"></select></label>
+      <label>Tanggal (boleh dikosongkan) <input type="date" id="tgl2"></label>
+      <label>Hari <select id="hari2"></select></label>
+      <label>Jam mulai <select id="jam2"></select></label>
+      <label>Durasi
+        <select id="durasi2"><option value="30">30 menit</option><option value="60" selected>60 menit</option></select>
+      </label>
+      <label>Guru yang berhalangan <select id="absen2"></select></label>
+    </div>
+    <div id="hasil2"></div>
+    <p class="hint">Tanpa tanggal, pencarian memakai jadwal tetap mingguan. Dengan tanggal, izin dan ganti jadwal pada tanggal itu ikut dihitung.</p>
+  </section>
+
+  <!-- TAB 3 -->
+  <section class="panel" id="panel3" hidden>
+    <div id="kunci">
+      <div class="row"><label>PIN admin <input type="password" id="pin" autocomplete="off"></label></div>
+      <button class="btn utama" id="buka">Buka</button>
+      <div id="pesanPin"></div>
+    </div>
+
+    <div id="isi3" hidden>
+      <div class="tabs kecil" role="tablist">
+        <button id="sub1" aria-selected="true">Jadwal siswa</button>
+        <button id="sub2" aria-selected="false">Blokir guru</button>
+        <button id="sub3" aria-selected="false">Izin dan ganti</button>
+      </div>
+
+      <!-- Jadwal siswa -->
+      <div id="s1">
+        <div class="row">
+          <label>Guru <select id="guru3"></select></label>
+          <label>Hari <select id="hari3"></select></label>
+        </div>
+        <button class="btn utama" id="tambah">Tambah jadwal</button>
+        <div class="form" id="form3" hidden>
+          <h2 id="judulForm">Tambah jadwal</h2>
+          <div class="row">
+            <label>Siswa <select id="fSiswa"></select></label>
+            <label>Hari <select id="fHari"></select></label>
+            <label>Jam mulai <select id="fMulai"></select></label>
+            <label>Durasi
+              <select id="fDurasi"><option value="30">30 menit</option><option value="60" selected>60 menit</option>
+              <option value="90">90 menit</option><option value="120">120 menit</option></select>
+            </label>
+          </div>
+          <p class="hint" id="fGuru" style="margin:0 0 10px"></p>
+          <button class="btn utama" id="simpan">Simpan jadwal</button>
+          <button class="btn" id="batal">Batal</button>
+          <div id="pesanForm"></div>
+        </div>
+        <div class="scroll" id="daftar3"></div>
+      </div>
+
+      <!-- Blokir guru -->
+      <div id="s2" hidden>
+        <div class="row">
+          <label>Guru <select id="guruB"></select></label>
+          <label>Hari <select id="hariB"></select></label>
+        </div>
+        <div class="grid" id="gridB"></div>
+        <button class="btn utama" id="simpanB">Simpan blokir</button>
+        <div id="pesanB"></div>
+        <p class="hint">Klik jam untuk memblokir atau membukanya. Abu-abu bergaris = diblokir (guru tidak mengajar). Merah = sudah ada murid, atur di menu Jadwal siswa.</p>
+      </div>
+
+      <!-- Izin dan ganti -->
+      <div id="s3" hidden>
+        <div class="form" style="margin-top:0">
+          <div class="row">
+            <label>Cari siswa atau guru <input type="search" id="cariJ"></label>
+          </div>
+          <div class="row">
+            <label>Jadwal <select id="selJ"></select></label>
+          </div>
+          <div class="row">
+            <label>Tanggal izin (jadwal yang tidak dipakai) <input type="date" id="tglIzin"></label>
+          </div>
+          <label class="cek"><input type="checkbox" id="cekPindah"> Pindah ke jadwal lain</label>
+          <div class="row" id="pindah" hidden style="margin-top:12px">
+            <label>Tanggal pindah <input type="date" id="tglPindah"></label>
+            <label>Jam mulai <select id="iMulai"></select></label>
+            <label>Durasi
+              <select id="iDurasi"><option value="30">30 menit</option><option value="60" selected>60 menit</option></select>
+            </label>
+          </div>
+          <button class="btn utama" id="simpanI">Simpan</button>
+          <div id="pesanI"></div>
+        </div>
+        <h2>Izin dan ganti jadwal terbaru</h2>
+        <div class="scroll" id="daftarI"></div>
+      </div>
+    </div>
+  </section>
+
+  <button class="btn" id="muat">Muat ulang data</button>
+  <div id="info">Memuat data...</div>
+</main>
+
+<script>
+  // =====================================================================
+  //  PENGHUBUNG KE APPS SCRIPT (menggantikan google.script.run)
+  //  Ganti API_URL dengan URL Web app (/exec) milikmu, TANPA "/u/8/"
+  // =====================================================================
+  var API_URL = 'GANTI_DENGAN_URL_EXEC_KAMU';
+
+  var google = { script: { run: (function () {
+    var FUNGSI = ['ambilData', 'ambilAdmin', 'simpanJadwal', 'hapusJadwal', 'simpanBlokir', 'catatIzin', 'hapusIzin'];
+    function buat(ok, gagal) {
+      var p = {
+        withSuccessHandler: function (f) { return buat(f, gagal); },
+        withFailureHandler: function (f) { return buat(ok, f); }
+      };
+      FUNGSI.forEach(function (fn) {
+        p[fn] = function () {
+          var args = Array.prototype.slice.call(arguments);
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // jangan diganti: supaya tidak kena preflight CORS
+            body: JSON.stringify({ fn: fn, args: args })
+          })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j.error) throw new Error(j.error); return j.data; })
+          .then(function (d) { if (ok) ok(d); }, function (e) { if (gagal) gagal(e); });
+        };
+      });
+      return p;
+    }
+    return buat(null, null);
+  })() } };
+
+  // =====================================================================
+  //  APLIKASI
+  // =====================================================================
+  var HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+  var MULAI = 7 * 60, AKHIR = 20 * 60, LANGKAH = 30;
+
+  var daftarGuru = [], daftarAlat = [], SLOT = [];
+  var sibuk = {}, blokirAda = {}, ovr = {};
+  var pin = '', admin = null, editIds = [], blokirBaru = {};
+  for (var m = MULAI; m <= AKHIR; m += LANGKAH) SLOT.push(m);
+
+  function $(id){ return document.getElementById(id); }
+  function esc(t){ return String(t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function jam(menit){
+    var h = Math.floor(menit / 60), mm = menit % 60;
+    return (h < 10 ? '0' : '') + h + '.' + (mm < 10 ? '0' : '') + mm;
+  }
+  function keMenit(teks){
+    var t = /(\d+)[.:](\d+)/.exec(teks || '');
+    return t ? Number(t[1]) * 60 + Number(t[2]) : null;
+  }
+  function hariDariTgl(tgl){ return HARI[(new Date(tgl + 'T00:00:00').getDay() + 6) % 7]; }
+  function hariIni(){ return HARI[(new Date().getDay() + 6) % 7]; }
+  function ymd(d){
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function pesan(id, teks, ok){ $(id).innerHTML = teks ? '<div class="' + (ok ? 'sukses' : 'gagal') + '">' + esc(teks) + '</div>' : ''; }
+
+  // Status satu slot: Kosong / Terisi / Blokir. Bila tgl diisi, izin dan ganti jadwal tanggal itu ikut dihitung.
+  function status(guru, hari, menit, tgl){
+    var s = sibuk[guru + '|' + hari + '|' + menit] || 'Kosong';
+    if (tgl && s !== 'Blokir'){
+      var o = ovr[guru + '|' + tgl + '|' + menit];
+      if (o === 'Ganti') s = 'Terisi';
+      else if (o === 'Izin' && s === 'Terisi') s = 'Kosong';
+    }
+    return s;
+  }
+
+  // ---------- Memuat data ----------
+  function muatData(){
+    $('info').textContent = 'Memuat data...';
+    google.script.run
+      .withSuccessHandler(function(d){
+        daftarGuru = d.guru;
+        var semuaAlat = {};
+        daftarGuru.forEach(function(g){ g.alat.forEach(function(a){ semuaAlat[a] = true; }); });
+        daftarAlat = Object.keys(semuaAlat).sort();
+
+        sibuk = {}; blokirAda = {}; ovr = {};
+        d.blokir.forEach(function(r){
+          var mnt = keMenit(r[2]);
+          if (mnt === null) return;
+          sibuk[r[0] + '|' + r[1] + '|' + mnt] = 'Blokir';
+          blokirAda[r[0] + '|' + r[1] + '|' + mnt] = true;
+        });
+        d.terisi.forEach(function(r){
+          var mnt = keMenit(r[2]);
+          if (mnt !== null) sibuk[r[0] + '|' + r[1] + '|' + mnt] = 'Terisi';
+        });
+        ['Izin','Ganti'].forEach(function(jenis){      // Ganti dihitung terakhir supaya menang
+          d.izin.forEach(function(r){
+            var mnt = keMenit(r[2]);
+            if (r[3] === jenis && mnt !== null) ovr[r[0] + '|' + r[1] + '|' + mnt] = jenis;
+          });
+        });
+
+        siapkanPilihan();
+        gambar1();
+        gambar2();
+        $('info').textContent = 'Data dimuat pukul ' + new Date().toLocaleTimeString('id-ID') + '.';
+        if (pin) muatAdmin();
+      })
+      .withFailureHandler(function(e){
+        $('info').innerHTML = '<div class="gagal">Data gagal dimuat: ' + esc(e.message) + '</div>';
+      })
+      .ambilData();
+  }
+
+  function isi(id, daftar, terpilih){
+    var lama = $(id).value;
+    $(id).innerHTML = daftar.map(function(v){
+      var nilai = (typeof v === 'object') ? v.nilai : v;
+      var label = (typeof v === 'object') ? v.label : v;
+      return '<option value="' + esc(nilai) + '">' + esc(label) + '</option>';
+    }).join('');
+    $(id).value = lama || terpilih || '';
+    if (!$(id).value) $(id).selectedIndex = 0;
+  }
+  function siapkanPilihan(){
+    var h = hariIni();
+    var pil = daftarAlat.indexOf('Piano') >= 0 ? 'Piano' : '';
+    isi('alat1', daftarAlat, pil);
+    isi('alat2', daftarAlat, pil);
+    isi('hari1', HARI, h);
+    isi('hari2', HARI, h);
+    isi('jam2', SLOT.map(function(s){ return {nilai: s, label: jam(s)}; }), 15 * 60);
+    var absen = [{nilai: '', label: '(tidak ada)'}];
+    daftarGuru.forEach(function(g){ absen.push({nilai: g.nama, label: g.nama}); });
+    isi('absen2', absen, '');
+  }
+  function pakaiTanggal(tglId, hariId){
+    var tgl = $(tglId).value;
+    if (tgl) $(hariId).value = hariDariTgl(tgl);
+    $(hariId).disabled = !!tgl;
+    return tgl;
+  }
+
+  // ---------- Tab 1 ----------
+  function rentangKosong(guru, hari, tgl){
+    var hasil = [], awal = null;
+    SLOT.forEach(function(s){
+      if (status(guru, hari, s, tgl) === 'Kosong'){
+        if (awal === null) awal = s;
+      } else if (awal !== null){
+        hasil.push([awal, s]); awal = null;
+      }
+    });
+    if (awal !== null) hasil.push([awal, AKHIR + LANGKAH]);
+    return hasil;
+  }
+  function gambar1(){
+    var tgl = pakaiTanggal('tgl1', 'hari1');
+    var alat = $('alat1').value, hari = $('hari1').value;
+    var guruAlat = daftarGuru.filter(function(g){ return g.alat.indexOf(alat) >= 0; });
+
+    var html = '';
+    guruAlat.forEach(function(g){
+      var rentang = rentangKosong(g.nama, hari, tgl);
+      html += '<div class="guru"><b>' + esc(g.nama) + '</b>';
+      html += rentang.length
+        ? rentang.map(function(r){
+            return '<span class="chip' + (r[1] - r[0] >= 60 ? ' long' : '') + '">' + jam(r[0]) + ' - ' + jam(r[1]) + '</span>';
+          }).join('')
+        : '<span class="none">Tidak ada jam kosong</span>';
+      html += '</div>';
+    });
+    $('hasil1').innerHTML = html || '<p class="none">Belum ada guru untuk alat musik ini.</p>';
+
+    if (!guruAlat.length){ $('tabel1').innerHTML = ''; return; }
+    var t = '<table><tr><th>Jam</th>' + guruAlat.map(function(g){ return '<th>' + esc(g.nama) + '</th>'; }).join('') + '</tr>';
+    SLOT.forEach(function(s){
+      t += '<tr><th>' + jam(s) + '</th>' + guruAlat.map(function(g){
+        var st = status(g.nama, hari, s, tgl);
+        return '<td class="' + st + '">' + st + '</td>';
+      }).join('') + '</tr>';
+    });
+    $('tabel1').innerHTML = t + '</table>';
+  }
+
+  // ---------- Tab 2 ----------
+  function gambar2(){
+    var tgl = pakaiTanggal('tgl2', 'hari2');
+    var alat = $('alat2').value, hari = $('hari2').value;
+    var mulai = Number($('jam2').value), durasi = Number($('durasi2').value), absen = $('absen2').value;
+    var perlu = [];
+    for (var m = mulai; m < mulai + durasi; m += LANGKAH) perlu.push(m);
+    var cocok = daftarGuru.filter(function(g){
+      return g.nama !== absen && g.alat.indexOf(alat) >= 0 &&
+             perlu.every(function(s){ return status(g.nama, hari, s, tgl) === 'Kosong'; });
+    });
+    $('hasil2').innerHTML = cocok.length
+      ? '<p>Guru ' + esc(alat) + ' yang kosong ' + hari + ', ' + jam(mulai) + ' - ' + jam(mulai + durasi) + ':</p>' +
+        cocok.map(function(g){ return '<div class="hasil">' + esc(g.nama) + '</div>'; }).join('')
+      : '<div class="gagal">Tidak ada guru ' + esc(alat) + ' yang kosong di waktu itu. Coba durasi 30 menit atau jam lain.</div>';
+  }
+
+  // ---------- Tab 3: kunci PIN ----------
+  function bukaAdmin(){
+    pin = $('pin').value;
+    $('pesanPin').innerHTML = '';
+    muatAdmin();
+  }
+  function muatAdmin(){
+    google.script.run
+      .withSuccessHandler(function(d){
+        admin = d;
+        $('kunci').hidden = true;
+        $('isi3').hidden = false;
+        siapkanAdmin();
+      })
+      .withFailureHandler(function(e){
+        pin = '';
+        $('kunci').hidden = false;
+        $('isi3').hidden = true;
+        pesan('pesanPin', e.message, false);
+      })
+      .ambilAdmin(pin);
+  }
+  function siapkanAdmin(){
+    var guruSet = {};
+    daftarGuru.forEach(function(g){ guruSet[g.nama] = true; });
+    admin.blok.forEach(function(b){ guruSet[b.guru] = true; });
+    var namaGuru = Object.keys(guruSet).sort();
+    isi('guru3', [{nilai: '', label: 'Semua guru'}].concat(namaGuru), '');
+    isi('hari3', HARI, hariIni());
+    isi('fSiswa', admin.siswa.map(function(s){ return {nilai: s.id, label: s.nama + ' (' + s.alat + ')'}; }), '');
+    isi('fHari', HARI, hariIni());
+    isi('fMulai', SLOT.map(function(s){ return {nilai: s, label: jam(s)}; }), 15 * 60);
+    isi('guruB', namaGuru, '');
+    isi('hariB', HARI, hariIni());
+    isi('iMulai', SLOT.map(function(s){ return {nilai: s, label: jam(s)}; }), 15 * 60);
+    tampilGuruForm();
+    gambar3();
+    siapkanBlokir();
+    isiSelJ();
+    gambarI();
+  }
+  function pilihSub(n){
+    [1, 2, 3].forEach(function(i){
+      $('s' + i).hidden = (n !== i);
+      $('sub' + i).setAttribute('aria-selected', n === i);
+    });
+  }
+
+  // ---------- Jadwal siswa ----------
+  function tampilGuruForm(){
+    var s = admin.siswa.filter(function(x){ return x.id === $('fSiswa').value; })[0];
+    $('fGuru').textContent = s ? 'Guru pengajar: ' + s.guru : '';
+  }
+  function gambar3(){
+    var g = $('guru3').value, h = $('hari3').value;
+    var daftar = admin.blok.filter(function(b){ return b.hari === h && (!g || b.guru === g); })
+      .sort(function(a, b){ return a.guru.localeCompare(b.guru) || a.mulai - b.mulai; });
+    if (!daftar.length){ $('daftar3').innerHTML = '<p class="none">Belum ada jadwal pada hari ini.</p>'; return; }
+    var t = '<table class="adm"><tr><th>Jam</th><th>Siswa</th><th>Guru</th><th></th></tr>';
+    daftar.forEach(function(b, i){
+      t += '<tr><td>' + jam(b.mulai) + ' - ' + jam(b.selesai) + '</td><td>' + esc(b.nama || '(tanpa nama)') +
+           (/non/i.test(b.status) ? '<span class="badge">Non Aktif</span>' : '') +
+           '</td><td>' + esc(b.guru) + '</td><td class="aksi"><button class="btn kecil" data-ubah="' + esc(b.ids[0]) +
+           '">Ubah</button> <button class="btn kecil" data-hapus="' + esc(b.ids[0]) + '">Hapus</button></td></tr>';
+    });
+    $('daftar3').innerHTML = t + '</table>';
+  }
+  function cariBlok(id){ return admin.blok.filter(function(b){ return b.ids.indexOf(id) >= 0; })[0]; }
+  function bukaForm(b){
+    editIds = b ? b.ids : [];
+    $('judulForm').textContent = b ? 'Ubah jadwal' : 'Tambah jadwal';
+    if (b){
+      if (!$('fSiswa').querySelector('option[value="' + b.siswaId + '"]')){
+        $('fSiswa').add(new Option((b.nama || '(tanpa nama)') + ' (' + (b.alat || '') + ')', b.siswaId));
+      }
+      $('fSiswa').value = b.siswaId; $('fHari').value = b.hari; $('fMulai').value = b.mulai;
+      var dur = String(b.selesai - b.mulai);
+      if (!$('fDurasi').querySelector('option[value="' + dur + '"]')) $('fDurasi').add(new Option(dur + ' menit', dur));
+      $('fDurasi').value = dur;
+    }
+    tampilGuruForm();
+    pesan('pesanForm', '');
+    $('form3').hidden = false;
+    $('form3').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }
+  function simpan(){
+    $('simpan').disabled = true;
+    pesan('pesanForm', '');
+    google.script.run
+      .withSuccessHandler(function(r){
+        $('simpan').disabled = false;
+        if (!r.ok){ pesan('pesanForm', r.pesan, false); return; }
+        pesan('pesanForm', 'Jadwal tersimpan.', true);
+        $('hari3').value = $('fHari').value;
+        editIds = [];
+        muatData();
+      })
+      .withFailureHandler(function(e){ $('simpan').disabled = false; pesan('pesanForm', e.message, false); })
+      .simpanJadwal(pin, {ids: editIds, siswaId: $('fSiswa').value, hari: $('fHari').value,
+                          mulai: Number($('fMulai').value), durasi: Number($('fDurasi').value)});
+  }
+  function hapusBlok(id){
+    var b = cariBlok(id);
+    if (!b || !confirm('Hapus jadwal ' + (b.nama || '(tanpa nama)') + ', ' + b.hari + ' ' + jam(b.mulai) + '?')) return;
+    google.script.run
+      .withSuccessHandler(function(r){ muatData(); })
+      .withFailureHandler(function(e){ alert(e.message); })
+      .hapusJadwal(pin, b.ids);
+  }
+
+  // ---------- Blokir guru ----------
+  function siapkanBlokir(){
+    blokirBaru = {};
+    var g = $('guruB').value, h = $('hariB').value;
+    SLOT.forEach(function(s){ if (blokirAda[g + '|' + h + '|' + s]) blokirBaru[s] = true; });
+    gambarB();
+  }
+  function gambarB(){
+    var g = $('guruB').value, h = $('hariB').value;
+    $('gridB').innerHTML = SLOT.map(function(s){
+      var terisi = sibuk[g + '|' + h + '|' + s] === 'Terisi';
+      var kelas = terisi ? 'terisi' : (blokirBaru[s] ? 'blokir' : '');
+      return '<button class="' + kelas + '" data-jam="' + s + '"' + (terisi ? ' disabled' : '') + '>' + jam(s) + '</button>';
+    }).join('');
+  }
+  function simpanBlokir(){
+    $('simpanB').disabled = true;
+    pesan('pesanB', '');
+    google.script.run
+      .withSuccessHandler(function(r){
+        $('simpanB').disabled = false;
+        if (!r.ok){ pesan('pesanB', r.pesan, false); return; }
+        pesan('pesanB', 'Blokir tersimpan.', true);
+        muatData();
+      })
+      .withFailureHandler(function(e){ $('simpanB').disabled = false; pesan('pesanB', e.message, false); })
+      .simpanBlokir(pin, $('guruB').value, $('hariB').value,
+                    Object.keys(blokirBaru).map(Number));
+  }
+
+  // ---------- Izin dan ganti ----------
+  function isiSelJ(){
+    var q = $('cariJ').value.toLowerCase();
+    var daftar = admin.blok.filter(function(b){
+      return ((b.nama || '') + ' ' + b.guru + ' ' + b.hari).toLowerCase().indexOf(q) >= 0;
+    }).sort(function(a, b){ return (a.nama || '').localeCompare(b.nama || '') || a.hari.localeCompare(b.hari); });
+    isi('selJ', daftar.map(function(b){
+      return {nilai: b.ids[0], label: (b.nama || '(tanpa nama)') + ' · ' + b.guru + ' · ' + b.hari + ' ' + jam(b.mulai) + '-' + jam(b.selesai)};
+    }), '');
+  }
+  function simpanIzin(){
+    var id = $('selJ').value, pindah = $('cekPindah').checked;
+    if (!id){ pesan('pesanI', 'Pilih jadwal dulu.', false); return; }
+    $('simpanI').disabled = true;
+    pesan('pesanI', '');
+    google.script.run
+      .withSuccessHandler(function(r){
+        $('simpanI').disabled = false;
+        if (!r.ok){ pesan('pesanI', r.pesan, false); return; }
+        pesan('pesanI', 'Tersimpan.', true);
+        muatData();
+      })
+      .withFailureHandler(function(e){ $('simpanI').disabled = false; pesan('pesanI', e.message, false); })
+      .catatIzin(pin, {blokId: id, tglAsli: $('tglIzin').value,
+                       pindah: pindah ? {tgl: $('tglPindah').value, mulai: Number($('iMulai').value), durasi: Number($('iDurasi').value)} : null});
+  }
+  function gambarI(){
+    var batas = new Date(); batas.setDate(batas.getDate() - 14);
+    var daftar = admin.izin.filter(function(z){ return z.tgl >= ymd(batas); })
+      .sort(function(a, b){ return a.tgl.localeCompare(b.tgl) || a.mulai - b.mulai; });
+    if (!daftar.length){ $('daftarI').innerHTML = '<p class="none">Belum ada izin atau ganti jadwal terbaru.</p>'; return; }
+    var t = '<table class="adm"><tr><th>Tanggal</th><th>Jam</th><th>Siswa</th><th>Guru</th><th>Jenis</th><th></th></tr>';
+    daftar.forEach(function(z){
+      var p = z.tgl.split('-');
+      t += '<tr><td>' + p[2] + '/' + p[1] + '/' + p[0] + '</td><td>' + jam(z.mulai) + ' - ' + jam(z.selesai) + '</td><td>' +
+           esc(z.nama) + '</td><td>' + esc(z.guru) + '</td><td>' + (z.jenis === 'Izin' ? 'Izin' : 'Ganti jadwal') +
+           '</td><td class="aksi"><button class="btn kecil" data-hapusi="' + esc(z.id) + '">Hapus</button></td></tr>';
+    });
+    $('daftarI').innerHTML = t + '</table>';
+  }
+  function hapusIzin(id){
+    if (!confirm('Hapus catatan ini?')) return;
+    google.script.run
+      .withSuccessHandler(function(r){ if (!r.ok) alert(r.pesan); muatData(); })
+      .withFailureHandler(function(e){ alert(e.message); })
+      .hapusIzin(pin, id);
+  }
+
+  // ---------- Tombol ----------
+  function pilihTab(n){
+    [1, 2, 3].forEach(function(i){
+      $('panel' + i).hidden = (n !== i);
+      $('tab' + i).setAttribute('aria-selected', n === i);
+    });
+  }
+  [1, 2, 3].forEach(function(i){ $('tab' + i).onclick = function(){ pilihTab(i); }; });
+  [1, 2, 3].forEach(function(i){ $('sub' + i).onclick = function(){ pilihSub(i); }; });
+  ['alat1','hari1','tgl1'].forEach(function(id){ $(id).onchange = gambar1; });
+  ['alat2','hari2','tgl2','jam2','durasi2','absen2'].forEach(function(id){ $(id).onchange = gambar2; });
+  ['guru3','hari3'].forEach(function(id){ $(id).onchange = gambar3; });
+  ['guruB','hariB'].forEach(function(id){ $(id).onchange = siapkanBlokir; });
+  $('fSiswa').onchange = tampilGuruForm;
+  $('buka').onclick = bukaAdmin;
+  $('pin').onkeydown = function(e){ if (e.key === 'Enter') bukaAdmin(); };
+  $('tambah').onclick = function(){ bukaForm(null); };
+  $('batal').onclick = function(){ $('form3').hidden = true; };
+  $('simpan').onclick = simpan;
+  $('daftar3').onclick = function(e){
+    var u = e.target.getAttribute('data-ubah'), h = e.target.getAttribute('data-hapus');
+    if (u) bukaForm(cariBlok(u));
+    if (h) hapusBlok(h);
+  };
+  $('gridB').onclick = function(e){
+    var s = e.target.getAttribute('data-jam');
+    if (s === null) return;
+    if (blokirBaru[s]) delete blokirBaru[s]; else blokirBaru[s] = true;
+    gambarB();
+  };
+  $('simpanB').onclick = simpanBlokir;
+  $('cariJ').oninput = isiSelJ;
+  $('cekPindah').onchange = function(){ $('pindah').hidden = !$('cekPindah').checked; };
+  $('simpanI').onclick = simpanIzin;
+  $('daftarI').onclick = function(e){
+    var h = e.target.getAttribute('data-hapusi');
+    if (h) hapusIzin(h);
+  };
+  $('muat').onclick = muatData;
+
+  muatData();
+</script>
+</body>
+</html>
