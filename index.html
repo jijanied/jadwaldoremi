@@ -134,6 +134,7 @@
             <label>Studio <select id="fStudio"></select></label>
           </div>
           <p class="hint" id="fGuru" style="margin:0 0 10px"></p>
+          <button class="btn" id="studioBaru" type="button">+ Studio baru</button>
           <button class="btn utama" id="simpan">Simpan jadwal</button>
           <button class="btn" id="batal">Batal</button>
           <div id="pesanForm"></div>
@@ -194,7 +195,7 @@
   var API_URL = 'https://script.google.com/macros/s/AKfycbzGZVhxGJnGkJpRorCwqZZxli8NUedoSbozwdiozWlkv4w60lSl3thZTklBXGtk7mJp2Q/exec';
 
   var google = { script: { run: (function () {
-    var FUNGSI = ['ambilData', 'ambilAdmin', 'simpanJadwal', 'hapusJadwal', 'simpanBlokir', 'catatIzin', 'hapusIzin'];
+    var FUNGSI = ['ambilData', 'ambilAdmin', 'simpanJadwal', 'hapusJadwal', 'simpanBlokir', 'catatIzin', 'hapusIzin', 'tambahStudio'];
     function buat(ok, gagal) {
       var p = {
         withSuccessHandler: function (f) { return buat(f, gagal); },
@@ -603,6 +604,20 @@
   $('tambah').onclick = function(){ bukaForm(null); };
   $('batal').onclick = function(){ $('form3').hidden = true; };
   $('simpan').onclick = simpan;
+  $('studioBaru').onclick = function(){
+    var nama = (prompt('Nama studio baru (contoh: Studio 3):') || '').trim();
+    if (!nama) return;
+    google.script.run
+      .withSuccessHandler(function(r){
+        if (!r.ok){ pesan('pesanForm', r.pesan, false); return; }
+        admin.studio = (admin.studio || []).concat([r.nama]).sort();
+        isi('fStudio', [{nilai: '', label: '(tanpa studio)'}].concat(admin.studio), '');
+        $('fStudio').value = r.nama;
+        pesan('pesanForm', 'Studio "' + r.nama + '" ditambahkan dan dipilih.', true);
+      })
+      .withFailureHandler(function(e){ pesan('pesanForm', e.message, false); })
+      .tambahStudio(pin, nama);
+  };
   $('daftar3').onclick = function(e){
     var u = e.target.getAttribute('data-ubah'), h = e.target.getAttribute('data-hapus');
     if (u) bukaForm(cariBlok(u));
