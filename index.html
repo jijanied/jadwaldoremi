@@ -57,7 +57,7 @@
                background:var(--ok);color:var(--okt)}
   .grid button.blokir{background:var(--bl);color:var(--blt);font-weight:700;text-decoration:line-through}
   .grid button.terisi{background:var(--no);color:var(--not);cursor:default}
-  .badge{font-size:13px;padding:1px 8px;border-radius:99px;background:var(--bl);color:var(--blt);margin-left:6px}
+  .badge{font-size:13px;padding:1px 8px;border-radius:99px;background:var(--bl);color:var(--blt);margin-left:6px;font-weight:400}
 </style>
 </head>
 <body>
@@ -80,7 +80,7 @@
     </div>
     <div id="hasil1"></div>
     <div class="scroll" id="tabel1"></div>
-    <p class="hint">Hijau = kosong, merah = terisi murid, abu-abu = diblokir. Tulisan tebal = kosong 60 menit atau lebih. Bila tanggal diisi, izin dan ganti jadwal pada tanggal itu ikut dihitung.</p>
+    <p class="hint">Hijau = kosong, merah = terisi murid, abu-abu = diblokir. Tulisan tebal = kosong 60 menit atau lebih. Label di samping nama guru = studio tetapnya. Bila tanggal diisi, izin dan ganti jadwal pada tanggal itu ikut dihitung.</p>
   </section>
 
   <!-- TAB 2 -->
@@ -131,6 +131,7 @@
               <select id="fDurasi"><option value="30">30 menit</option><option value="60" selected>60 menit</option>
               <option value="90">90 menit</option><option value="120">120 menit</option></select>
             </label>
+            <label>Studio <select id="fStudio"></select></label>
           </div>
           <p class="hint" id="fGuru" style="margin:0 0 10px"></p>
           <button class="btn utama" id="simpan">Simpan jadwal</button>
@@ -244,6 +245,7 @@
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
   }
   function pesan(id, teks, ok){ $(id).innerHTML = teks ? '<div class="' + (ok ? 'sukses' : 'gagal') + '">' + esc(teks) + '</div>' : ''; }
+  function lencanaStudio(g){ return g.studio ? '<span class="badge">' + esc(g.studio) + '</span>' : ''; }
 
   // Status satu slot: Kosong / Terisi / Blokir. Bila tgl diisi, izin dan ganti jadwal tanggal itu ikut dihitung.
   function status(guru, hari, menit, tgl){
@@ -346,7 +348,7 @@
     var html = '';
     guruAlat.forEach(function(g){
       var rentang = rentangKosong(g.nama, hari, tgl);
-      html += '<div class="guru"><b>' + esc(g.nama) + '</b>';
+      html += '<div class="guru"><b>' + esc(g.nama) + lencanaStudio(g) + '</b>';
       html += rentang.length
         ? rentang.map(function(r){
             return '<span class="chip' + (r[1] - r[0] >= 60 ? ' long' : '') + '">' + jam(r[0]) + ' - ' + jam(r[1]) + '</span>';
@@ -380,7 +382,7 @@
     });
     $('hasil2').innerHTML = cocok.length
       ? '<p>Guru ' + esc(alat) + ' yang kosong ' + hari + ', ' + jam(mulai) + ' - ' + jam(mulai + durasi) + ':</p>' +
-        cocok.map(function(g){ return '<div class="hasil">' + esc(g.nama) + '</div>'; }).join('')
+        cocok.map(function(g){ return '<div class="hasil">' + esc(g.nama) + lencanaStudio(g) + '</div>'; }).join('')
       : '<div class="gagal">Tidak ada guru ' + esc(alat) + ' yang kosong di waktu itu. Coba durasi 30 menit atau jam lain.</div>';
   }
 
@@ -416,6 +418,7 @@
     isi('fSiswa', admin.siswa.map(function(s){ return {nilai: s.id, label: s.nama + ' (' + s.alat + ')'}; }), '');
     isi('fHari', HARI, hariIni());
     isi('fMulai', SLOT.map(function(s){ return {nilai: s, label: jam(s)}; }), 15 * 60);
+    isi('fStudio', [{nilai: '', label: '(tanpa studio)'}].concat(admin.studio || []), '');
     isi('guruB', namaGuru, '');
     isi('hariB', HARI, hariIni());
     isi('iMulai', SLOT.map(function(s){ return {nilai: s, label: jam(s)}; }), 15 * 60);
@@ -436,17 +439,23 @@
   function tampilGuruForm(){
     var s = admin.siswa.filter(function(x){ return x.id === $('fSiswa').value; })[0];
     $('fGuru').textContent = s ? 'Guru pengajar: ' + s.guru : '';
+    if (s && !editIds.length){      // jadwal baru: studio otomatis ikut default guru, tetap bisa diganti
+      var g = daftarGuru.filter(function(x){ return x.nama === s.guru; })[0];
+      $('fStudio').value = (g && g.studio) || '';
+      if ($('fStudio').selectedIndex < 0) $('fStudio').selectedIndex = 0;
+    }
   }
   function gambar3(){
     var g = $('guru3').value, h = $('hari3').value;
     var daftar = admin.blok.filter(function(b){ return b.hari === h && (!g || b.guru === g); })
       .sort(function(a, b){ return a.guru.localeCompare(b.guru) || a.mulai - b.mulai; });
     if (!daftar.length){ $('daftar3').innerHTML = '<p class="none">Belum ada jadwal pada hari ini.</p>'; return; }
-    var t = '<table class="adm"><tr><th>Jam</th><th>Siswa</th><th>Guru</th><th></th></tr>';
+    var t = '<table class="adm"><tr><th>Jam</th><th>Siswa</th><th>Guru</th><th>Studio</th><th></th></tr>';
     daftar.forEach(function(b, i){
       t += '<tr><td>' + jam(b.mulai) + ' - ' + jam(b.selesai) + '</td><td>' + esc(b.nama || '(tanpa nama)') +
            (/non/i.test(b.status) ? '<span class="badge">Non Aktif</span>' : '') +
-           '</td><td>' + esc(b.guru) + '</td><td class="aksi"><button class="btn kecil" data-ubah="' + esc(b.ids[0]) +
+           '</td><td>' + esc(b.guru) + '</td><td>' + esc(b.studio || '-') +
+           '</td><td class="aksi"><button class="btn kecil" data-ubah="' + esc(b.ids[0]) +
            '">Ubah</button> <button class="btn kecil" data-hapus="' + esc(b.ids[0]) + '">Hapus</button></td></tr>';
     });
     $('daftar3').innerHTML = t + '</table>';
@@ -463,6 +472,8 @@
       var dur = String(b.selesai - b.mulai);
       if (!$('fDurasi').querySelector('option[value="' + dur + '"]')) $('fDurasi').add(new Option(dur + ' menit', dur));
       $('fDurasi').value = dur;
+      if (b.studio && !$('fStudio').querySelector('option[value="' + b.studio + '"]')) $('fStudio').add(new Option(b.studio, b.studio));
+      $('fStudio').value = b.studio || '';
     }
     tampilGuruForm();
     pesan('pesanForm', '');
@@ -483,7 +494,8 @@
       })
       .withFailureHandler(function(e){ $('simpan').disabled = false; pesan('pesanForm', e.message, false); })
       .simpanJadwal(pin, {ids: editIds, siswaId: $('fSiswa').value, hari: $('fHari').value,
-                          mulai: Number($('fMulai').value), durasi: Number($('fDurasi').value)});
+                          mulai: Number($('fMulai').value), durasi: Number($('fDurasi').value),
+                          studio: $('fStudio').value});
   }
   function hapusBlok(id){
     var b = cariBlok(id);
